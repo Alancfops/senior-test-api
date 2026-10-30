@@ -135,7 +135,7 @@ function renderHeader(doc: PdfDoc, data: ReportPdfData): void {
   drawDivider(doc);
 }
 
-function renderSectionTitle(doc: PdfDoc, title: string): void {
+export function renderSectionTitle(doc: PdfDoc, title: string): void {
   ensureSpace(doc, 48);
   resetCursorX(doc);
   doc.moveDown(0.45);
@@ -515,17 +515,20 @@ function renderFooter(doc: PdfDoc, data: ReportPdfData): void {
     );
 }
 
-function renderFullRow(doc: PdfDoc, label: string, value: string): void {
+export function renderFullRow(
+  doc: PdfDoc,
+  label: string,
+  value: string,
+  labelWidth = 128,
+): void {
   resetCursorX(doc);
   const rowTop = doc.y;
-  const labelWidth = 128;
   const valueWidth = contentWidth(doc) - labelWidth;
 
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(8.5)
-    .fillColor(REPORT_PDF_COLORS.muted)
-    .text(`${label}:`, doc.x, rowTop, { width: labelWidth });
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(REPORT_PDF_COLORS.muted);
+
+  const labelHeight = doc.heightOfString(`${label}:`, { width: labelWidth });
+  doc.text(`${label}:`, doc.x, rowTop, { width: labelWidth });
 
   doc.font('Helvetica').fontSize(9.5).fillColor(REPORT_PDF_COLORS.text);
 
@@ -535,11 +538,11 @@ function renderFullRow(doc: PdfDoc, label: string, value: string): void {
     lineGap: 2,
   });
 
-  doc.y = rowTop + Math.max(14, valueHeight) + 4;
+  doc.y = rowTop + Math.max(14, valueHeight, labelHeight) + 4;
   resetCursorX(doc);
 }
 
-function drawDivider(doc: PdfDoc): void {
+export function drawDivider(doc: PdfDoc): void {
   resetCursorX(doc);
   const y = doc.y;
   doc
@@ -551,11 +554,11 @@ function drawDivider(doc: PdfDoc): void {
   doc.y = y + 8;
 }
 
-function contentWidth(doc: PdfDoc): number {
+export function contentWidth(doc: PdfDoc): number {
   return doc.page.width - REPORT_PDF_LAYOUT.pageMargin * 2;
 }
 
-function resetCursorX(doc: PdfDoc): void {
+export function resetCursorX(doc: PdfDoc): void {
   doc.x = REPORT_PDF_LAYOUT.pageMargin;
 }
 

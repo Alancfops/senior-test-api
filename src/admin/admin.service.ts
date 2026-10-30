@@ -388,7 +388,11 @@ export class AdminService {
 
   async listAuditLogs(query: ListAuditLogsQuery) {
     const where: Prisma.AdminAuditLogWhereInput = {
-      ...(query.action ? { action: query.action } : {}),
+      ...(query.actions
+        ? { action: { in: query.actions } }
+        : query.action
+          ? { action: query.action }
+          : {}),
       ...(query.adminId ? { adminId: query.adminId } : {}),
       ...(query.from || query.to
         ? {
@@ -723,6 +727,20 @@ export class AdminService {
     assessmentId: string,
   ): Promise<void> {
     await this.audit.logReportDownload(adminId, assessmentId);
+  }
+
+  async logGeneralReportDownload(
+    adminId: string,
+    period: { from: string; to: string },
+  ): Promise<void> {
+    // Relatório agregado não tem entidade-alvo: o próprio emissor ocupa targetId.
+    await this.audit.log(
+      adminId,
+      AdminAuditAction.DOWNLOAD_GENERAL_REPORT,
+      'GeneralReport',
+      adminId,
+      { from: period.from, to: period.to },
+    );
   }
 
   private async findPendingAccessRequest(requestId: string) {
