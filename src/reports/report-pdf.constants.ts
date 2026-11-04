@@ -12,6 +12,7 @@ export const REPORT_PDF_COLORS = {
   chartLine: '#333333',
   chartHighlight: '#111111',
   warningBg: '#FAFAFA',
+  barFill: '#B8B8B8',
 } as const;
 
 export const REPORT_PDF_LAYOUT = {

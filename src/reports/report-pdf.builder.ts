@@ -135,7 +135,7 @@ function renderHeader(doc: PdfDoc, data: ReportPdfData): void {
   drawDivider(doc);
 }
 
-function renderSectionTitle(doc: PdfDoc, title: string): void {
+export function renderSectionTitle(doc: PdfDoc, title: string): void {
   ensureSpace(doc, 48);
   resetCursorX(doc);
   doc.moveDown(0.45);
@@ -305,8 +305,9 @@ function renderEvolutionChart(
   const chartY = doc.y;
   const chartWidth = contentWidth(doc);
   const chartHeight = 142;
-  const paddingLeft = 34;
-  const paddingRight = 10;
+  const paddingLeft = 40;
+  const paddingRight = 24;
+  const pointLabelWidth = 44;
   const paddingTop = 14;
   const paddingBottom = 26;
   const plotWidth = chartWidth - paddingLeft - paddingRight;
@@ -343,16 +344,23 @@ function renderEvolutionChart(
 
   doc.restore();
 
+  // Gira em torno do centro do eixo Y; o texto parte de metade da altura antes do centro
+  // para ficar centralizado na área do gráfico em vez de subir além da borda.
+  const yAxisLabelX = chartX + 12;
+  const yAxisLabelY = plotTop + plotHeight / 2;
+  const yAxisLabelFontSize = 7.5;
   doc.save();
-  doc.rotate(-90, { origin: [chartX + 12, plotTop + plotHeight / 2] });
+  doc.rotate(-90, { origin: [yAxisLabelX, yAxisLabelY] });
   doc
     .font('Helvetica')
-    .fontSize(7.5)
+    .fontSize(yAxisLabelFontSize)
     .fillColor(REPORT_PDF_COLORS.light)
-    .text(yAxisLabel, chartX + 12, plotTop + plotHeight / 2, {
-      width: plotHeight,
-      align: 'center',
-    });
+    .text(
+      yAxisLabel,
+      yAxisLabelX - plotHeight / 2,
+      yAxisLabelY - yAxisLabelFontSize / 2,
+      { width: plotHeight, align: 'center', lineBreak: false },
+    );
   doc.restore();
 
   const coordinates = points.map((point, index) => {
@@ -394,15 +402,20 @@ function renderEvolutionChart(
       .font('Helvetica')
       .fontSize(7)
       .fillColor(REPORT_PDF_COLORS.text)
-      .text(point.rawLabel, x - 16, y - 14, { width: 32, align: 'center' });
+      .text(point.rawLabel, x - pointLabelWidth / 2, y - 14, {
+        width: pointLabelWidth,
+        align: 'center',
+        lineBreak: false,
+      });
 
     doc
       .font('Helvetica')
       .fontSize(6.5)
       .fillColor(REPORT_PDF_COLORS.light)
-      .text(point.dateLabel, x - 16, plotBottom + 5, {
-        width: 32,
+      .text(point.dateLabel, x - pointLabelWidth / 2, plotBottom + 5, {
+        width: pointLabelWidth,
         align: 'center',
+        lineBreak: false,
       });
   });
 
@@ -515,17 +528,20 @@ function renderFooter(doc: PdfDoc, data: ReportPdfData): void {
     );
 }
 
-function renderFullRow(doc: PdfDoc, label: string, value: string): void {
+export function renderFullRow(
+  doc: PdfDoc,
+  label: string,
+  value: string,
+  labelWidth = 128,
+): void {
   resetCursorX(doc);
   const rowTop = doc.y;
-  const labelWidth = 128;
   const valueWidth = contentWidth(doc) - labelWidth;
 
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(8.5)
-    .fillColor(REPORT_PDF_COLORS.muted)
-    .text(`${label}:`, doc.x, rowTop, { width: labelWidth });
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(REPORT_PDF_COLORS.muted);
+
+  const labelHeight = doc.heightOfString(`${label}:`, { width: labelWidth });
+  doc.text(`${label}:`, doc.x, rowTop, { width: labelWidth });
 
   doc.font('Helvetica').fontSize(9.5).fillColor(REPORT_PDF_COLORS.text);
 
@@ -535,11 +551,11 @@ function renderFullRow(doc: PdfDoc, label: string, value: string): void {
     lineGap: 2,
   });
 
-  doc.y = rowTop + Math.max(14, valueHeight) + 4;
+  doc.y = rowTop + Math.max(14, valueHeight, labelHeight) + 4;
   resetCursorX(doc);
 }
 
-function drawDivider(doc: PdfDoc): void {
+export function drawDivider(doc: PdfDoc): void {
   resetCursorX(doc);
   const y = doc.y;
   doc
@@ -551,11 +567,11 @@ function drawDivider(doc: PdfDoc): void {
   doc.y = y + 8;
 }
 
-function contentWidth(doc: PdfDoc): number {
+export function contentWidth(doc: PdfDoc): number {
   return doc.page.width - REPORT_PDF_LAYOUT.pageMargin * 2;
 }
 
-function resetCursorX(doc: PdfDoc): void {
+export function resetCursorX(doc: PdfDoc): void {
   doc.x = REPORT_PDF_LAYOUT.pageMargin;
 }
 

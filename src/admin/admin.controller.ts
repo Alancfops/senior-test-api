@@ -29,6 +29,7 @@ import { ReportsService } from '../reports/reports.service';
 import { AdminGuard } from './admin.guard';
 import { AdminService } from './admin.service';
 import {
+  generalReportSchema,
   listAccessRequestsQuerySchema,
   listAuditLogsQuerySchema,
   listPatientAssessmentsQuerySchema,
@@ -198,6 +199,34 @@ export class AdminController {
       await this.reportsService.generateAssessmentReportForAdmin(assessmentId);
 
     await this.adminService.logReportDownload(admin.therapistId, assessmentId);
+
+    response.status(201);
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader(
+      'Content-Disposition',
+      toContentDispositionValue(filename),
+    );
+    response.send(pdf);
+  }
+
+  @Post('reports/general')
+  @ApiOperation({
+    summary:
+      'Gera PDF agregado do período (até um semestre), sem identificar pacientes',
+  })
+  @ApiProduces('application/pdf')
+  async generateGeneralReport(
+    @CurrentTherapist() admin: { therapistId: string },
+    @Body(new ZodValidationPipe(generalReportSchema))
+    body: z.infer<typeof generalReportSchema>,
+    @Res() response: Response,
+  ) {
+    const { pdf, filename } = await this.reportsService.generateGeneralReport(
+      admin.therapistId,
+      body,
+    );
+
+    await this.adminService.logGeneralReportDownload(admin.therapistId, body);
 
     response.status(201);
     response.setHeader('Content-Type', 'application/pdf');

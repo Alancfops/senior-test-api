@@ -117,6 +117,101 @@ describe('Admin (e2e)', () => {
     ).toBe(true);
   });
 
+  describe('POST /admin/reports/general', () => {
+    const period = { from: '2026-07-01', to: '2026-07-31' };
+
+    it('exige role de gerenciador', async () => {
+      await request(app.getHttpServer())
+        .post('/admin/reports/general')
+        .set('Authorization', `Bearer ${therapistToken}`)
+        .send(period)
+        .expect(403);
+    });
+
+    it('rejeita período invertido ou maior que um semestre', async () => {
+      await request(app.getHttpServer())
+        .post('/admin/reports/general')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ from: '2026-07-31', to: '2026-07-01' })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .post('/admin/reports/general')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ from: '2026-01-01', to: '2026-07-04' })
+        .expect(400);
+    });
+
+    it('responde 404 sem avaliação finalizada no período e não audita', async () => {
+      await request(app.getHttpServer())
+        .post('/admin/reports/general')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ from: '2020-01-01', to: '2020-01-31' })
+        .expect(404);
+
+      const auditCount = await prisma.adminAuditLog.count({
+        where: { action: 'DOWNLOAD_GENERAL_REPORT' },
+      });
+      expect(auditCount).toBe(0);
+    });
+
+    it('gera PDF e audita só o período, respeitando o limite do último dia em Maceió', async () => {
+      const patient = await prisma.patient.create({
+        data: {
+          therapistId: therapistAId,
+          fullName: 'Paciente Relatorio Geral',
+          age: 70,
+          gender: 'masculino',
+          contact: '(11) 99999-0000',
+        },
+      });
+      const assessment = await prisma.assessment.create({
+        data: {
+          therapistId: therapistAId,
+          patientId: patient.id,
+          instrumentCode: 'TUG',
+          status: AssessmentStatus.FINALIZED,
+          // 31/07 às 23:30 em Maceió já é 01/08 em UTC.
+          finalizedAt: new Date('2026-08-01T02:30:00.000Z'),
+          payload: {},
+        },
+      });
+      await prisma.assessmentResult.create({
+        data: {
+          assessmentId: assessment.id,
+          rawValue: 14,
+          rawLabel: '14.0 s',
+          classificationLabel: 'Maior risco',
+          classificationCode: 'TUG_HIGH_RISK',
+          classificationMeta: {},
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/admin/reports/general')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(period)
+        .expect(201);
+
+      expect(response.headers['content-type']).toContain('application/pdf');
+      expect(response.headers['content-disposition']).toContain(
+        'relatorio-geral_2026-07-01_a_2026-07-31.pdf',
+      );
+
+      const logs = await request(app.getHttpServer())
+        .get('/admin/audit-logs')
+        .query({ actions: 'DOWNLOAD_REPORT,DOWNLOAD_GENERAL_REPORT' })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(logs.body.data[0]).toMatchObject({
+        action: 'DOWNLOAD_GENERAL_REPORT',
+        targetType: 'GeneralReport',
+        metadata: period,
+      });
+    });
+  });
+
   it('POST /admin/patients/:id/transfer atualiza patient e assessments', async () => {
     const patient = await prisma.patient.create({
       data: {
