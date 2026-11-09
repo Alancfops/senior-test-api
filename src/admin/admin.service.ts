@@ -503,7 +503,7 @@ export class AdminService {
         return {
           id: log.id,
           adminId: log.adminId,
-          adminName: log.admin.fullName,
+          adminName: log.admin?.fullName ?? 'Conta removida',
           action: log.action,
           targetType: log.targetType,
           targetId: log.targetId,

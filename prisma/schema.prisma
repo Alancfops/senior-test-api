@@ -78,14 +78,15 @@ model AdminAccessRequest {
 
 model AdminAuditLog {
   id         String           @id @default(uuid()) @db.Uuid
-  adminId    String           @map("admin_id") @db.Uuid
+  /// Nulo quando a conta autora foi excluída — o registro de auditoria permanece.
+  adminId    String?          @map("admin_id") @db.Uuid
   action     AdminAuditAction
   targetType String           @map("target_type")
   targetId   String           @map("target_id") @db.Uuid
   metadata   Json             @default("{}")
   createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  admin Therapist @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  admin Therapist? @relation(fields: [adminId], references: [id], onDelete: SetNull)
 
   @@index([adminId])
   @@index([targetType, targetId])

@@ -288,6 +288,50 @@ describe('Admin (e2e)', () => {
       .expect(409);
   });
 
+  it('DELETE /admin/therapists/:id exclui aluno que já baixou PDF no app e preserva a auditoria', async () => {
+    const student = await prisma.therapist.create({
+      data: {
+        email: 'aluno-pdf@test.com',
+        fullName: 'Aluno PDF',
+        passwordHash: await hashPassword('Abcd1234'),
+      },
+    });
+    const download = await prisma.adminAuditLog.create({
+      data: {
+        adminId: student.id,
+        action: 'DOWNLOAD_REPORT',
+        targetType: 'Assessment',
+        targetId: student.id,
+      },
+    });
+
+    await request(app.getHttpServer())
+      .delete(`/admin/therapists/${student.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(204);
+
+    expect(
+      await prisma.therapist.findUnique({ where: { id: student.id } }),
+    ).toBeNull();
+    const kept = await prisma.adminAuditLog.findUnique({
+      where: { id: download.id },
+    });
+    expect(kept).not.toBeNull();
+    expect(kept?.adminId).toBeNull();
+
+    const logs = await request(app.getHttpServer())
+      .get('/admin/audit-logs')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    const listed = logs.body.data.find(
+      (log: { id: string }) => log.id === download.id,
+    );
+    expect(listed).toMatchObject({
+      adminId: null,
+      adminName: 'Conta removida',
+    });
+  });
+
   it('GET /patients do fisio continua isolado após transferência', async () => {
     const patient = await prisma.patient.create({
       data: {
