@@ -2,6 +2,24 @@
 
 API **NestJS + Prisma + PostgreSQL** do Sênior Teste Funcional. Atende o app mobile ([senior-test-funcional](https://github.com/Alancfops/senior-test-funcional)) e o painel admin ([stf-gerenciador-web](https://github.com/Alancfops/stf-gerenciador-web)).
 
+## O ecossistema STF
+
+O STF são três repositórios, clonados lado a lado na mesma pasta. **Esta API é o centro:** os outros dois são clientes que só exibem o que ela devolve.
+
+| Sistema | Quem usa | O que faz |
+|---------|----------|-----------|
+| **STF API** (este repo) | Os dois clientes abaixo | Contas e login (JWT), pacientes, avaliações, cálculo de pontuação e classificação dos instrumentos (TUG, Katz, Berg, Tinetti, MEEM), geração de PDF, e-mails (recuperação de senha, senha temporária), permissões e trilha de auditoria |
+| **App mobile** (`../senior-test-funcional`) | Fisioterapeutas (alunos) — papel `THERAPIST` | Cadastrar pacientes, aplicar os testes, ver histórico/gráfico e baixar o PDF. Cada aluno só enxerga os próprios pacientes |
+| **Gerenciador web** (`../stf-gerenciador-web`) | Professora (`ADMIN`) e ajudantes (`ASSISTANT`) | Supervisão de toda a equipe pelas rotas `/admin/*`: transferir/excluir, aprovar ajudantes, relatórios individuais e geral, auditoria |
+
+```
+App mobile ──┐  /auth, /patients, /assessments, /reports
+             ├──► STF API (NestJS) ──► PostgreSQL
+Gerenciador ─┘  /auth, /admin/*
+```
+
+Toda regra clínica (pontuação, interpretação, PDF) vive **só aqui** — nenhum cliente a duplica.
+
 ## Início rápido
 
 Pré-requisitos: Node.js LTS, Docker (Postgres) e `make`.
