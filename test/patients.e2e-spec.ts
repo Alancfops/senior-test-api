@@ -2,6 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { existsSync } from 'fs';
+import { join } from 'path';
 
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -355,5 +357,61 @@ describe('Patients (e2e)', () => {
     expect(byAgeDesc.body.data[0]?.age).toBeGreaterThanOrEqual(
       byAgeDesc.body.data[1]?.age ?? 0,
     );
+  });
+
+  it('PATCH /patients/:id remove a foto salva com removeAvatar', async () => {
+    const tinyPng =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    const base = {
+      fullName: 'Joana Lima',
+      age: 70,
+      gender: 'feminino',
+      contact: '(82) 9 1111-2222',
+      schoolingBand: '9_11_anos',
+    };
+
+    const created = await request(app.getHttpServer())
+      .post('/patients')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({
+        ...base,
+        avatarImage: { mimeType: 'image/png', base64: tinyPng },
+      })
+      .expect(201);
+
+    const avatarPath = join(
+      process.cwd(),
+      'uploads',
+      'patients',
+      `${created.body.id}.png`,
+    );
+    expect(created.body.avatarUrl).toBe(
+      `/uploads/patients/${created.body.id}.png`,
+    );
+    expect(existsSync(avatarPath)).toBe(true);
+
+    await request(app.getHttpServer())
+      .patch(`/patients/${created.body.id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({
+        ...base,
+        removeAvatar: true,
+        avatarImage: { mimeType: 'image/png', base64: tinyPng },
+      })
+      .expect(400);
+
+    const updated = await request(app.getHttpServer())
+      .patch(`/patients/${created.body.id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ ...base, removeAvatar: true })
+      .expect(200);
+
+    expect(updated.body.avatarUrl).toBeNull();
+    expect(existsSync(avatarPath)).toBe(false);
+
+    const stored = await prisma.patient.findUnique({
+      where: { id: created.body.id },
+    });
+    expect(stored?.avatarUrl).toBeNull();
   });
 });
