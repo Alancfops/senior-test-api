@@ -27,6 +27,7 @@ const TABLE_HEADER_HEIGHT = 22;
 const TABLE_ROW_HEIGHT = 20;
 const TABLE_NOTE_HEIGHT = 18;
 const ROW_LABEL_WIDTH = 190;
+const CROSSING_ROW_GAP = 8;
 const NO_DATA_MESSAGE = 'Nenhuma avaliação no período.';
 
 const FOOTER_TEXT =
@@ -390,6 +391,8 @@ function renderCrossings(doc: PdfDoc, data: GeneralReportPdfData): void {
         ? 'Nenhum paciente avaliado nos dois instrumentos'
         : `${formatPatients(crossing.affected)} (avaliados nos dois instrumentos: ${crossing.evaluatedInBoth})`;
     renderFullRow(doc, crossing.label, value, ROW_LABEL_WIDTH);
+    // Rótulos quebram em duas linhas; sem respiro os itens ficam colados.
+    doc.y += CROSSING_ROW_GAP;
   }
 
   renderNote(
