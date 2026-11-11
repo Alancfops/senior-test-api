@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import { AvatarImageInput } from './schemas/patient.schemas';
@@ -22,4 +22,13 @@ export async function savePatientAvatar(
   await writeFile(absolutePath, Buffer.from(rawBase64, 'base64'));
 
   return `/uploads/patients/${fileName}`;
+}
+
+/** Apaga o arquivo da foto (jpg ou png); não falha se já não existir. */
+export async function removePatientAvatar(patientId: string): Promise<void> {
+  await Promise.all(
+    ['jpg', 'png'].map((extension) =>
+      rm(join(UPLOADS_DIR, `${patientId}.${extension}`), { force: true }),
+    ),
+  );
 }

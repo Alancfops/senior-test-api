@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { savePatientAvatar } from './patient-avatar.storage';
+import {
+  removePatientAvatar,
+  savePatientAvatar,
+} from './patient-avatar.storage';
 import {
   CreatePatientInput,
   ListPatientsQuery,
@@ -82,8 +85,13 @@ export class PatientsService {
         gender: input.gender,
         contact: input.contact.trim(),
         schoolingBand: input.schoolingBand,
+        ...(input.removeAvatar ? { avatarUrl: null } : {}),
       },
     });
+
+    if (input.removeAvatar) {
+      await removePatientAvatar(patient.id);
+    }
 
     if (input.avatarImage) {
       const avatarUrl = await savePatientAvatar(patient.id, input.avatarImage);

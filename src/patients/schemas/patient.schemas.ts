@@ -53,8 +53,16 @@ export const createPatientSchema = z.object({
 
 export type CreatePatientInput = z.infer<typeof createPatientSchema>;
 
-/** RF004 — atualização de cadastro (mesmos campos do create). */
-export const updatePatientSchema = createPatientSchema;
+/** RF004 — atualização de cadastro (campos do create + remoção da foto). */
+export const updatePatientSchema = createPatientSchema
+  .extend({
+    /** `true` apaga a foto salva — o paciente volta a exibir as iniciais. */
+    removeAvatar: z.boolean().optional(),
+  })
+  .refine((input) => !(input.removeAvatar && input.avatarImage), {
+    message: 'Envie uma nova foto ou remova a atual, não as duas coisas.',
+    path: ['removeAvatar'],
+  });
 
 export type UpdatePatientInput = z.infer<typeof updatePatientSchema>;
 
