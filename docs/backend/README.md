@@ -1,6 +1,6 @@
 # Backend — documentação de arquitetura
 
-> **Especificação** em `docs/backend/` — comportamento, stack, fluxos e LGPD. **Código** na raiz deste repo (`stf-api`, extraído de `senior-test-funcional/backend/`).  
+> **Especificação** em `docs/backend/` — comportamento, stack, fluxos e LGPD. **Código** na raiz deste repo (`senior-test-api`, clonado na pasta `stf-api`, extraído de `senior-test-funcional/backend/`).  
 > **Status (jul/2026):** Fases B–C **implementadas** (RF001–RF013). App consome a API na Fase D — ver [repository-and-workflow](../../../senior-test-funcional/docs/engineering/repository-and-workflow.md).
 
 **Leitura relacionada:** [frontend](../../../senior-test-funcional/docs/frontend/README.md) (app) · [architecture](../../../senior-test-funcional/docs/engineering/architecture.md) (visão global) · [requirements](../../../senior-test-funcional/docs/product/requirements.md) (RFs) · [PRD](../../../senior-test-funcional/docs/product/PRD.md) (visão de produto).

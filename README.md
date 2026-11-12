@@ -4,7 +4,7 @@ API **NestJS + Prisma + PostgreSQL** do **Sênior Teste Funcional (STF)**, siste
 
 | Repositório | Link |
 |-------------|------|
-| **STF API** (este) | [github.com/Alancfops/stf-api](https://github.com/Alancfops/stf-api) |
+| **STF API** (este) | [github.com/Alancfops/senior-test-api](https://github.com/Alancfops/senior-test-api) |
 | App mobile | [github.com/Alancfops/senior-test-funcional](https://github.com/Alancfops/senior-test-funcional) |
 | Gerenciador web | [github.com/Alancfops/senior-test-web](https://github.com/Alancfops/senior-test-web) |
 
@@ -113,7 +113,7 @@ Rotas `/admin/*` exigem papel `ADMIN` ou `ASSISTANT` (`AdminGuard`); as demais f
 Pré-requisitos: **Node.js 20+**, **Docker** (Postgres) e **make**.
 
 ```bash
-git clone git@github.com:Alancfops/stf-api.git
+git clone git@github.com:Alancfops/senior-test-api.git stf-api
 cd stf-api
 
 make setup      # primeira vez: deps, .env, Postgres
